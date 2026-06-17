@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Torneo Bughouse · Ronda 5 (FINAL)</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-light: #1f2630;
+    --ink: #e6edf3;
+    --muted: #8b949e;
+    --gold: #f5b800;
+    --accent: #58a6ff;
+    --purple: #a371f7;
+    --win-a: #2ea043;
+    --win-b: #d4423b;
+    --border: #30363d;
+    --white-piece: #f0f0f0;
+    --black-piece: #2a2a2a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 1.5rem;
+    min-height: 100vh;
+  }
+  .container { max-width: 1600px; margin: 0 auto; }
+  header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--gold);
+  }
+  header h1 { font-size: 2.4rem; color: var(--gold); margin-bottom: 0.3rem; }
+  header .subtitle { color: var(--muted); font-size: 1.1rem; }
+  header .ronda {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--bg);
+    padding: 0.4rem 1.2rem;
+    border-radius: 30px;
+    font-weight: 700;
+    margin-top: 0.5rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.05em;
+  }
+  header .presentes { color: var(--muted); font-size: 0.95rem; margin-top: 0.4rem; }
+  .leaders-bar {
+    background: linear-gradient(135deg, rgba(245, 184, 0, 0.15), rgba(88, 166, 255, 0.1));
+    border: 1px solid var(--gold);
+    border-radius: 10px;
+    padding: 0.9rem 1.2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: var(--ink);
+    font-size: 0.95rem;
+  }
+  .leaders-bar strong { color: var(--gold); }
+  .normal-bar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--purple);
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .label {
+    color: white;
+    background: var(--purple);
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .puntos-tag {
+    color: var(--muted);
+    font-size: 0.85rem;
+    background: var(--panel-light);
+    padding: 0.1rem 0.5rem;
+    border-radius: 10px;
+    margin-left: 0.4rem;
+  }
+  .normal-jugadores { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .normal-jug {
+    padding: 0.3rem 0.7rem;
+    border-radius: 5px;
+    background: var(--panel-light);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.9rem;
+  }
+  .normal-jug:hover { background: var(--accent); color: var(--bg); }
+  .normal-jug.win { background: var(--win-a); color: white; }
+  .vs { color: var(--muted); font-size: 0.85rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 1.2rem;
+  }
+  .mesa {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .mesa.leader-mesa {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold);
+  }
+  .mesa-header {
+    background: var(--panel-light);
+    padding: 0.7rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .mesa-num { font-size: 1.4rem; font-weight: 700; color: var(--gold); }
+  .mesa-tag { color: var(--muted); font-size: 0.85rem; }
+  .parejas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+  .pareja {
+    background: var(--panel);
+    padding: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .pareja:hover { background: var(--panel-light); }
+  .pareja.winner-a { background: rgba(46, 160, 67, 0.18); border-left: 3px solid var(--win-a); }
+  .pareja.winner-b { background: rgba(212, 66, 59, 0.18); border-left: 3px solid var(--win-b); }
+  .pareja-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+  .jugador {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0;
+    font-size: 0.95rem;
+  }
+  .jugador-pts {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 0.8rem;
+    background: var(--panel-light);
+    padding: 0 0.45rem;
+    border-radius: 8px;
+  }
+  .jugador-pts.leader { background: var(--gold); color: var(--bg); font-weight: 700; }
+  .color-chip {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .color-chip.white { background: var(--white-piece); }
+  .color-chip.black { background: var(--black-piece); }
+  .check-mark {
+    position: absolute;
+    top: 0.5rem; right: 0.5rem;
+    font-size: 1.4rem;
+    opacity: 0;
+  }
+  .pareja.winner-a .check-mark, .pareja.winner-b .check-mark { opacity: 1; }
+  .controls {
+    margin-top: 2rem;
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 0.8rem 1.4rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.gold { background: var(--gold); }
+  button:hover { opacity: 0.85; }
+  button.secondary {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--border);
+  }
+  #report {
+    margin-top: 1.5rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    display: none;
+    white-space: pre-wrap;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  #report.visible { display: block; }
+  .legend { text-align: center; margin-top: 1rem; color: var(--muted); font-size: 0.9rem; }
+  .hint { text-align: center; color: var(--muted); margin-bottom: 1rem; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>♟ Torneo Bughouse · Final</h1>
+    <div class="subtitle">IES Serranía · Ajedrez por parejas</div>
+    <div class="ronda">RONDA 5 — ÚLTIMA RONDA</div>
+    <div class="presentes">26 presentes · Ausentes hoy: Daniel, Samuel Guerra, Adam</div>
+  </header>
+
+  <div class="leaders-bar">
+    🏆 <strong>Lucha por el podio</strong>: los líderes <strong>Antonio Nestál Sánchez</strong> y <strong>Omar El Kadiri</strong> (4 pts) van repartidos en las mesas 1 y 2.
+    Si los dos ganan, empatan en lo más alto con 5 pts. Si uno solo gana, se proclama campeón.
+  </div>
+
+  <div class="normal-bar">
+    <span class="label">AJEDREZ NORMAL</span>
+    <div class="normal-jugadores">
+      <span class="normal-jug" id="normal-1" onclick="marcarNormal(1)">
+        <span class="color-chip white"></span>Samuel Gómez Martín<span class="puntos-tag">3</span>
+      </span>
+      <span class="vs">vs</span>
+      <span class="normal-jug" id="normal-2" onclick="marcarNormal(2)">
+        <span class="color-chip black"></span>Antonio Campos Campos<span class="puntos-tag">3</span>
+      </span>
+    </div>
+  </div>
+
+  <p class="hint">Pulsa en la pareja ganadora de cada mesa. Los números tras los nombres son los puntos previos del torneo.</p>
+
+  <div class="grid" id="mesas"></div>
+
+  <div class="controls">
+    <button class="gold" onclick="generarResumen()">🏆 Generar resumen final</button>
+    <button class="secondary" onclick="resetear()">🔄 Resetear</button>
+  </div>
+
+  <pre id="report"></pre>
+
+  <div class="legend">
+    Mesas 1, 2, 3, 4 son partidas suma 4-4. Mesas 5 y 6 son las "fuertes" (5-5).<br>
+    Tras esta ronda se publicará la clasificación final del torneo.
+  </div>
+</div>
+
+<script>
+const puntosPrevios = {
+  "Antonio Nestál Sánchez": 4, "Omar El Kadiri": 4,
+  "Aitana Fernández Elena": 3, "Antonio Campos Campos": 3, "Elías Sánchez Códez": 3,
+  "Emilio González Rey": 3, "Juan Gómez Florido": 3, "Malak Lakrouni": 3,
+  "María González Doblas": 3, "María Muñoz Del Río": 3, "Rafael Cantarero Rubio": 3,
+  "Samuel Gómez Martín": 3,
+  "Carmen Marmolejo Nebro": 2, "Darío Moreno Sánchez": 2, "David Ruiz Mora": 2,
+  "Habiba Aharchi": 2, "Mohamed Amine Abarrah": 2, "Omar El Mahou El Bachiri": 2,
+  "Paula Paz Cueto": 2, "Roumaisae Abdelhak": 2,
+  "Adam El Mansouri": 1, "Daniel Rodríguez Rubio": 1, "Francisco Quintana Rubio": 1,
+  "Isabel Doblas Ponce": 1, "Kawthar Abarrah": 1, "Meryem El Hora": 1,
+  "Ana Aguilar Sánchez": 0, "Andrés Cantarero Doblas": 0, "Samuel Guerra Gil": 0
+};
+
+const partidas = [
+  { mesa: 1, leader: true,
+    pa: ["María Muñoz Del Río", "Kawthar Abarrah"],
+    pb: ["Antonio Nestál Sánchez", "Ana Aguilar Sánchez"] },
+  { mesa: 2, leader: true,
+    pa: ["Omar El Kadiri", "Andrés Cantarero Doblas"],
+    pb: ["Omar El Mahou El Bachiri", "Darío Moreno Sánchez"] },
+  { mesa: 3,
+    pa: ["Juan Gómez Florido", "Meryem El Hora"],
+    pb: ["Paula Paz Cueto", "Carmen Marmolejo Nebro"] },
+  { mesa: 4,
+    pa: ["Emilio González Rey", "Francisco Quintana Rubio"],
+    pb: ["Malak Lakrouni", "Isabel Doblas Ponce"] },
+  { mesa: 5,
+    pa: ["Elías Sánchez Códez", "Roumaisae Abdelhak"],
+    pb: ["Mohamed Amine Abarrah", "Aitana Fernández Elena"] },
+  { mesa: 6,
+    pa: ["María González Doblas", "Habiba Aharchi"],
+    pb: ["David Ruiz Mora", "Rafael Cantarero Rubio"] }
+];
+
+const normal = { j1: "Samuel Gómez Martín", j2: "Antonio Campos Campos" };
+const resultados = {};
+let resultadoNormal = null;
+
+function render() {
+  const cont = document.getElementById('mesas');
+  cont.innerHTML = '';
+  for (const p of partidas) {
+    const r = resultados[p.mesa];
+    const tag = p.leader ? '<span class="mesa-tag">⭐ Mesa de líder · Bughouse</span>' : '<span class="mesa-tag">2 tableros · Bughouse</span>';
+    const classes = `mesa ${p.leader ? 'leader-mesa' : ''}`;
+    cont.insertAdjacentHTML('beforeend', `
+      <div class="${classes}">
+        <div class="mesa-header">
+          <span class="mesa-num">Mesa ${p.mesa}</span>
+          ${tag}
+        </div>
+        <div class="parejas">
+          <div class="pareja ${r==='A'?'winner-a':''}" onclick="marcar(${p.mesa},'A')">
+            <div class="pareja-label">PAREJA A</div>
+            <div class="jugador"><span class="color-chip white"></span>${p.pa[0]}<span class="jugador-pts ${puntosPrevios[p.pa[0]]>=4?'leader':''}">${puntosPrevios[p.pa[0]]}</span></div>
+            <div class="jugador"><span class="color-chip black"></span>${p.pa[1]}<span class="jugador-pts ${puntosPrevios[p.pa[1]]>=4?'leader':''}">${puntosPrevios[p.pa[1]]}</span></div>
+            <span class="check-mark">🏆</span>
+          </div>
+          <div class="pareja ${r==='B'?'winner-b':''}" onclick="marcar(${p.mesa},'B')">
+            <div class="pareja-label">PAREJA B</div>
+            <div class="jugador"><span class="color-chip black"></span>${p.pb[0]}<span class="jugador-pts ${puntosPrevios[p.pb[0]]>=4?'leader':''}">${puntosPrevios[p.pb[0]]}</span></div>
+            <div class="jugador"><span class="color-chip white"></span>${p.pb[1]}<span class="jugador-pts ${puntosPrevios[p.pb[1]]>=4?'leader':''}">${puntosPrevios[p.pb[1]]}</span></div>
+            <span class="check-mark">🏆</span>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+  document.getElementById('normal-1').classList.toggle('win', resultadoNormal === 1);
+  document.getElementById('normal-2').classList.toggle('win', resultadoNormal === 2);
+}
+
+function marcar(mesa, bando) {
+  if (resultados[mesa] === bando) delete resultados[mesa];
+  else resultados[mesa] = bando;
+  render();
+}
+
+function marcarNormal(j) {
+  resultadoNormal = (resultadoNormal === j) ? null : j;
+  render();
+}
+
+function resetear() {
+  if (!confirm('¿Borrar todos los resultados?')) return;
+  for (const k of Object.keys(resultados)) delete resultados[k];
+  resultadoNormal = null;
+  document.getElementById('report').classList.remove('visible');
+  render();
+}
+
+function generarResumen() {
+  let txt = '=== RESULTADOS RONDA 5 (FINAL) - TORNEO BUGHOUSE ===\n\n';
+  txt += `26 presentes · Ausentes hoy: Daniel, Samuel Guerra, Adam\n\n`;
+
+  const puntosTotales = Object.fromEntries(Object.entries(puntosPrevios));
+  const inc = (n, pts) => { puntosTotales[n] = (puntosTotales[n] || 0) + pts; };
+
+  for (const p of partidas) {
+    const r = resultados[p.mesa];
+    let resStr = '(pendiente)';
+    if (r === 'A') { resStr = 'Gana A'; inc(p.pa[0],1); inc(p.pa[1],1); }
+    else if (r === 'B') { resStr = 'Gana B'; inc(p.pb[0],1); inc(p.pb[1],1); }
+    txt += `Mesa ${p.mesa}: ${resStr}\n`;
+    txt += `  A: ${p.pa[0]} + ${p.pa[1]}\n`;
+    txt += `  B: ${p.pb[0]} + ${p.pb[1]}\n\n`;
+  }
+
+  let normalStr = '(pendiente)';
+  if (resultadoNormal === 1) { normalStr = `Gana ${normal.j1}`; inc(normal.j1,1); }
+  else if (resultadoNormal === 2) { normalStr = `Gana ${normal.j2}`; inc(normal.j2,1); }
+  txt += `Ajedrez normal: ${normalStr}\n`;
+  txt += `  ${normal.j1} vs ${normal.j2}\n\n`;
+
+  const ordenado = Object.entries(puntosTotales).sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
+  txt += '🏆 === CLASIFICACIÓN FINAL DEL TORNEO === 🏆\n';
+  let pos = 1, prev = null;
+  for (let i = 0; i < ordenado.length; i++) {
+    const [n, pts] = ordenado[i];
+    if (pts !== prev) pos = i + 1;
+    const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '  ';
+    txt += `${medal} ${pos.toString().padStart(2)}. ${pts} pts  ${n}\n`;
+    prev = pts;
+  }
+
+  const rep = document.getElementById('report');
+  rep.textContent = txt;
+  rep.classList.add('visible');
+
+  navigator.clipboard.writeText(txt).then(() => {
+    alert('🏆 Resumen final copiado al portapapeles. ¡Fin del torneo!');
+  }).catch(() => {
+    alert('Resumen generado. Cópialo del recuadro inferior.');
+  });
+}
+
+render();
+</script>
+</body>
+</html>
